@@ -1,6 +1,6 @@
 # Arduino--Proiect-final
 
-Nume : Joc Mario 
+Nume : Joc Mario
 Voi reproduce jocul Mario pe mai multe matrice,cu driverul 7219.Voi incerca sa fac pe 6,iar daca nu reusesc raman doar la 3.
 
 
