@@ -7,11 +7,13 @@ Am conectat 6 matrice in serie(folosind 3 pini pentru primele 5 matrici,iar alti
 Proiectul este neterminat.
 
 Further development:
+
 Proiectul s-ar putea continua astfel:
 
 1.se pot genera obiecte cat mai in dreapta caracterului,care sa se shifteze spre stanga (spre caracter) atat timp cat butonul care il       "pune in miscare" este apasat (cel care deruleaza acele 3 frame-uri).
 
 2.caracterul trebuie sa sara peste aceste obiecte atunci cand ajung in dreptul lui
+
 3.se poate conecta un buzzer care sa scoata un anumit sunet cand sare caracterul
 
 Link catre BOM:
