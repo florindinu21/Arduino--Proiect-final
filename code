@@ -2,11 +2,11 @@
 #define MATRIX_DIMENSION 8
 LedControl lc = LedControl(12, 11, 10, 5);  //un obiect contine doar 5 matrici
 LedControl lc2 = LedControl(5, 6, 7, 1);   //alt obiect contine ultima matrice (se pot toate pe acelasi obiect)
-int move_button_pin = 1; 
-int jump_button_pin = 4;
+int move_button_pin = 1;                 //pin pentru butonul care il face sa se miste
+int jump_button_pin = 4;                 //pin pentru butonul care il face sa sara
 int ok = 0;
-long previous_move_frame_millis = 0;
-long previous_jump_frame_millis = 0;
+long previous_move_frame_millis = 0;      //timpul dintre frameurile pentru miscare
+long previous_jump_frame_millis = 0;       //timpul dintre frameurile pentru sarit
 long move_frame_interval = 100;
 long current_move_millis_frame = 0;
 long current_jump_millis_frame = 0;
