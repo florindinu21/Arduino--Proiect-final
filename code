@@ -1,0 +1,223 @@
+#include <LedControl.h>
+#define MATRIX_DIMENSION 8
+LedControl lc = LedControl(12, 11, 10, 5);  //un obiect contine doar 5 matrici
+LedControl lc2 = LedControl(5, 6, 7, 1);   //alt obiect contine ultima matrice (se pot toate pe acelasi obiect)
+int move_button_pin = 1; 
+int jump_button_pin = 4;
+int ok = 0;
+long previous_move_frame_millis = 0;
+long previous_jump_frame_millis = 0;
+long move_frame_interval = 100;
+long current_move_millis_frame = 0;
+long current_jump_millis_frame = 0;
+int jump_state = 0;
+int jump_body_reper = 3;     //retine nivelul la care trebuie sa construiasca capul si corpul(fara maini si picioare)  ...cel mai jos e 3 (pe pamant)
+                             //se va incrementa cand se apasa pe butonul de sarit si o sa scada corespunzator
+int jump_frame2_reper = 1;   //retine nivelul la care trebuie sa se construiasca frame2(maini si picioare)
+
+
+void setup() {
+    // put your setup code here, to run once:
+    for (int i = 0; i <= 4; i++) {
+        lc.shutdown(i, false); // turn off power saving, enables display
+        lc.setIntensity(i, MATRIX_DIMENSION); // sets brightness (0~15 possible values)
+        lc.clearDisplay(i); // clear
+    }
+
+    lc2.shutdown(0, false); // turn off power saving, enables display
+    lc2.setIntensity(0, 15); // sets brightness (0~15 possible values)
+    lc2.clearDisplay(0); // clear
+
+    pinMode(move_button_pin, INPUT_PULLUP);
+    pinMode(jump_button_pin, INPUT_PULLUP);
+}
+void draw_normal_position(bool option) { //pozitia fixa a mainilor si picioarelor atunci cand sta pe loc
+    lc.setLed(1, 5, 4, option);
+    lc.setLed(1, 6, 4, option);
+    lc.setLed(1, 6, 3, option);
+    lc.setLed(1, 0, 4, option);
+    lc.setLed(1, 1, 4, option);
+    lc.setLed(1, 0, 3, option);
+    lc.setLed(1, 4, 1, option);
+    lc.setLed(1, 4, 2, option);
+    lc.setLed(1, 5, 1, option);
+    lc.setLed(1, 1, 1, option);
+    lc.setLed(1, 2, 1, option);
+    lc.setLed(1, 2, 2, option);
+
+
+}
+void move_frame1(bool option) {                          //aprinde sau stinge frame1(doar maini si picioare),in functie de optiune
+    lc.setLed(1, 3, 2, option);
+    lc.setLed(1, 3, 1, option);
+    lc.setLed(1, 2, 1, option);
+
+}
+void move_frame2(bool option, int x) {                   //aprinde sau stinge frame2(doar maini si picioare),in functie de optiune
+    lc.setLed(1 + (x + 2) / MATRIX_DIMENSION, 7, (x + 2) % MATRIX_DIMENSION, option);    //frame2 e folosit pentru animatia de sarit
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 5, (x + 3) % MATRIX_DIMENSION, option);     //x este un punct de referinta,in jurul caruia se construieste toata imaginea (cel mai de jos punct)
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 6, (x + 3) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 2) / MATRIX_DIMENSION, 1, (x + 2) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 2) / MATRIX_DIMENSION, 0, (x + 2) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 0, (x + 3) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 1) / MATRIX_DIMENSION, 4, (x + 1) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 1) / MATRIX_DIMENSION, 5, (x + 1) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + x / MATRIX_DIMENSION, 5, x % MATRIX_DIMENSION, option);
+}
+
+void move_frame3(bool option) {                      //aprinde sau stinge frame3(doar maini si picioare),in functie de optiune
+    lc.setLed(1, 2, 1, option);
+    lc.setLed(1, 1, 3, option);
+    lc.setLed(1, 1, 1, option);
+    lc.setLed(1, 2, 2, option);
+    lc.setLed(1, 5, 4, option);
+    lc.setLed(1, 4, 2, option);
+    lc.setLed(1, 5, 2, option);
+    lc.setLed(1, 5, 1, option);
+
+    lc.setLed(1, 6, 3, option);
+
+
+
+}
+
+void draw_body(bool option, int x) {                  //deseneaza doar capul si corpul (fara maini si picioare ),care ,la fel ca frame2
+    lc.setLed(1 + x / MATRIX_DIMENSION, 2, x % MATRIX_DIMENSION, option);           //ia un punct x in jurul caruia deseneaza toata imaginea sau o stinge
+    lc.setLed(1 + x / MATRIX_DIMENSION, 3, x % MATRIX_DIMENSION, option);
+    lc.setLed(1 + x / MATRIX_DIMENSION, 4, x % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 2) / MATRIX_DIMENSION, 4, (x + 2) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 1) / MATRIX_DIMENSION, 2, (x + 1) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 1) / MATRIX_DIMENSION, 3, (x + 1) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 1) / MATRIX_DIMENSION, 4, (x + 1) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 5, (x + 3) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 4) / MATRIX_DIMENSION, 5, (x + 4) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 5, (x + 5) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 4, (x + 6) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 3, (x + 6) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 2, (x + 6) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 1, (x + 6) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 4) / MATRIX_DIMENSION, 0, (x + 4) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 0, (x + 5) % MATRIX_DIMENSION, option);
+    lc.setLed(2, 3, (x + 5) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 4) / MATRIX_DIMENSION, 2, (x + 4) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 1, (x + 3) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 2, (x + 3) % MATRIX_DIMENSION, option);
+    lc.setLed(1 + (x + 3) / MATRIX_DIMENSION, 3, (x + 3) % MATRIX_DIMENSION, option);
+
+
+}
+
+
+void loop() {
+    current_move_millis_frame = millis();
+    current_jump_millis_frame = millis();
+    int move_button_state = digitalRead(move_button_pin); 
+    int jump_button_state = digitalRead(jump_button_pin);
+    for (int i = 0; i <= 7; i++)          //deseneaza "pamantul" 
+        for (int j = 0; j < 1; j++) {    
+            lc.setLed(0, i, j, true);
+            lc.setLed(1, i, j, true);
+            lc2.setLed(0, i, j, true);
+        }
+
+    if (jump_state == 0) //daca nu se sare deseneaza capul si corpul(fara maini si picioare) la pozitia cea mai joasa 
+
+    {
+        draw_body(true, 3);
+    }
+    if (move_button_state == 1 && jump_button_state == 0 && jump_state == 0) {
+        if (current_move_millis_frame - previous_move_frame_millis >= move_frame_interval) {
+            previous_move_frame_millis = current_move_millis_frame;
+
+            if (ok == 0) {                             //o data la 100 ms,in functie de valoarea lui ok,deseneaza un frame si se stinge precedentul
+                draw_normal_position(false);           //... prin ok stim ce s-a desenat ultima data
+                move_frame1(true);
+            } else if (ok == 1) {
+                move_frame3(false);
+                move_frame1(true);
+            } else if (ok == 2) {
+                move_frame1(false);
+                move_frame2(true, 1);
+            } else if (ok == 3) {
+                move_frame2(false, 1);
+                move_frame3(true);
+            }
+            ok++;
+
+            if (ok == 4)
+                ok = 1;
+
+
+
+
+        }
+
+
+
+
+    } else if (jump_button_state != 1 && jump_state == 0) {
+        if (ok != 0) {                             //daca nu se sare se deseneaza pozitia normala
+            move_frame1(false);
+
+            move_frame2(false, 1);
+            move_frame3(false);
+        }
+        ok = 0;
+        draw_normal_position(true);
+    }
+
+    if (jump_button_state == 1) {                                                         //daca se tine apasat pe butonul de sarit
+        if (current_jump_millis_frame - previous_jump_frame_millis >= 50) {                //in functie de jump_state,se shifteaza cu o linie in sus
+            previous_jump_frame_millis = current_jump_millis_frame;                        
+            if (jump_state == 0)                                                           //daca e pe pamant,se sterg vechile imagini (fie ca era in miscare sau statea pe loc)                   
+                                                                                           //si se construieste imaginea formata din body+frame2 la cel mai jos nibel
+            {
+                move_frame1(false);
+
+                move_frame3(false);
+                draw_normal_position(false);
+                move_frame2(true, jump_frame2_reper++);
+                draw_body(true, jump_body_reper++);
+                jump_state++;
+
+            } else if (jump_state < 7) {                                               //cat timp mai poate sa sara,se shifteaza imaginea in sus
+                move_frame2(false, jump_frame2_reper - 1);
+                draw_body(false, jump_body_reper - 1);
+                move_frame2(true, jump_frame2_reper++);
+                draw_body(true, jump_body_reper++);
+
+                jump_state++;
+            } else if (jump_state == 7) {                                     //daca nu mai poate sa sara,imaginea coboara pe acelasi principiu
+                while (jump_state > 0) {
+                    move_frame2(false, jump_frame2_reper--);
+                    draw_body(false, jump_body_reper--);
+                    move_frame2(true, jump_frame2_reper);
+                    draw_body(true, jump_body_reper);
+                    delay(20);
+                    jump_state--;
+                    if (jump_state == 0)
+                        move_frame2(false, jump_frame2_reper);
+
+                }
+            }
+        }
+    } else if (jump_button_state == 0 && jump_state > 0) {             //daca s-a oprit apasarea butonului de sarit ,iar el este in animatia de sarit, va cobori imaginea pana atinge pamantul
+        while (jump_state > 0) {
+            move_frame2(false, jump_frame2_reper--);
+            draw_body(false, jump_body_reper--);
+            move_frame2(true, jump_frame2_reper);
+            draw_body(true, jump_body_reper);
+            delay(20);
+            jump_state--;
+            if (jump_state == 0)
+                move_frame2(false, jump_frame2_reper);
+
+        }
+    }
+
+
+
+
+
+
+}
